@@ -135,7 +135,7 @@ async function handleNewProjects(projects) {
 
 async function sendProjectToBackend(project) {
   try {
-    const response = await fetch('http://localhost:5000/api/projects', {
+    const response = await fetch('http://localhost:5001/api/projects', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

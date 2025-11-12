@@ -2,7 +2,7 @@ import requests
 import json
 from datetime import datetime
 
-BASE_URL = "http://localhost:5000/api"
+BASE_URL = "http://localhost:5001/api"
 
 def test_backend():
     print("🔧 Testing Workana Monitor Backend...")

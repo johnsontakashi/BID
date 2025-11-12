@@ -1,32 +1,67 @@
-function scrapeWorkanaProjects() {
+function scrapeWorkanaProjects(targetPinIndex = null) {
   const projects = [];
   
-  const projectElements = document.querySelectorAll('.project-item, .card-project, [class*="project"]');
+  // First try to find pins/items in viewer
+  const pins = document.querySelectorAll('.pin, [class*="pin"], .item, .card, .project-item, .card-project, [class*="project"]');
   
-  if (projectElements.length === 0) {
-    const alternativeSelectors = [
-      'article',
-      '.job-post',
-      '.project-card',
-      '[data-testid*="project"]',
-      '.list-group-item'
-    ];
+  if (pins.length > 0) {
+    console.log(`Found ${pins.length} pins/items in viewer`);
     
-    for (const selector of alternativeSelectors) {
-      const elements = document.querySelectorAll(selector);
-      if (elements.length > 0) {
-        elements.forEach(element => {
-          const project = extractProjectData(element);
-          if (project) projects.push(project);
-        });
-        break;
+    if (targetPinIndex !== null && pins[targetPinIndex]) {
+      // Target specific pin (4th pin = index 3)
+      console.log(`Targeting pin ${targetPinIndex + 1}`);
+      const project = extractProjectData(pins[targetPinIndex]);
+      if (project) {
+        project.pinIndex = targetPinIndex + 1;
+        projects.push(project);
       }
+    } else {
+      // Scrape all pins
+      pins.forEach((element, index) => {
+        const project = extractProjectData(element);
+        if (project) {
+          project.pinIndex = index + 1;
+          projects.push(project);
+        }
+      });
     }
-  } else {
-    projectElements.forEach(element => {
-      const project = extractProjectData(element);
-      if (project) projects.push(project);
-    });
+  }
+  
+  // Fallback to original selectors if no pins found
+  if (projects.length === 0) {
+    const projectElements = document.querySelectorAll('.project-item, .card-project, [class*="project"]');
+    
+    if (projectElements.length === 0) {
+      const alternativeSelectors = [
+        'article',
+        '.job-post',
+        '.project-card',
+        '[data-testid*="project"]',
+        '.list-group-item'
+      ];
+      
+      for (const selector of alternativeSelectors) {
+        const elements = document.querySelectorAll(selector);
+        if (elements.length > 0) {
+          elements.forEach((element, index) => {
+            const project = extractProjectData(element);
+            if (project) {
+              project.itemIndex = index + 1;
+              projects.push(project);
+            }
+          });
+          break;
+        }
+      }
+    } else {
+      projectElements.forEach((element, index) => {
+        const project = extractProjectData(element);
+        if (project) {
+          project.itemIndex = index + 1;
+          projects.push(project);
+        }
+      });
+    }
   }
   
   if (projects.length === 0) {
@@ -126,10 +161,41 @@ function generateProjectId(title, description) {
   return Math.abs(hash).toString();
 }
 
+function refreshViewer() {
+  console.log('Refreshing viewer...');
+  
+  // Try multiple refresh strategies
+  const refreshStrategies = [
+    () => window.location.reload(),
+    () => {
+      const refreshBtn = document.querySelector('[class*="refresh"], [class*="reload"], button[title*="refresh"], button[title*="reload"]');
+      if (refreshBtn) refreshBtn.click();
+    },
+    () => {
+      const viewer = document.querySelector('.viewer, [class*="viewer"], .container, [class*="container"]');
+      if (viewer) {
+        viewer.style.opacity = '0.5';
+        setTimeout(() => viewer.style.opacity = '1', 500);
+      }
+    }
+  ];
+  
+  // Try refresh strategies in order
+  for (const strategy of refreshStrategies) {
+    try {
+      strategy();
+      break;
+    } catch (e) {
+      console.warn('Refresh strategy failed:', e);
+    }
+  }
+}
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === 'scrapeProjects') {
     try {
-      const projects = scrapeWorkanaProjects();
+      const targetPin = message.targetPin !== undefined ? message.targetPin - 1 : null; // Convert 1-based to 0-based
+      const projects = scrapeWorkanaProjects(targetPin);
       console.log(`Scraped ${projects.length} projects from Workana`);
       
       chrome.runtime.sendMessage({
@@ -140,6 +206,33 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       sendResponse({success: true, projectCount: projects.length});
     } catch (error) {
       console.error('Error scraping projects:', error);
+      sendResponse({success: false, error: error.message});
+    }
+  } else if (message.action === 'refreshViewer') {
+    try {
+      refreshViewer();
+      sendResponse({success: true, message: 'Viewer refreshed'});
+    } catch (error) {
+      console.error('Error refreshing viewer:', error);
+      sendResponse({success: false, error: error.message});
+    }
+  } else if (message.action === 'scrapeFourthPin') {
+    try {
+      refreshViewer();
+      setTimeout(() => {
+        const projects = scrapeWorkanaProjects(3); // 4th pin = index 3
+        console.log(`Scraped 4th pin data:`, projects);
+        
+        chrome.runtime.sendMessage({
+          action: 'projectsFound',
+          projects: projects,
+          source: 'fourthPin'
+        });
+        
+        sendResponse({success: true, projectCount: projects.length, message: 'Fourth pin scraped after refresh'});
+      }, 2000); // Wait for refresh to complete
+    } catch (error) {
+      console.error('Error scraping fourth pin:', error);
       sendResponse({success: false, error: error.message});
     }
   }

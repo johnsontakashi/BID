@@ -13,7 +13,7 @@
   
   "host_permissions": [
     "https://www.workana.com/*",
-    "http://localhost:5000/*"
+    "http://localhost:5001/*"
   ],
   
   "background": {

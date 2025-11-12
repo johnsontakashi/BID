@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const keywordList = document.getElementById('keywordList');
   const refreshInterval = document.getElementById('refreshInterval');
   const testNotificationBtn = document.getElementById('testNotification');
+  const refreshAndScrapeFourthBtn = document.getElementById('refreshAndScrapeFourth');
   const openWorkanaBtn = document.getElementById('openWorkana');
   const statsDiv = document.getElementById('stats');
   
@@ -53,9 +54,53 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
   
+  refreshAndScrapeFourthBtn.addEventListener('click', async () => {
+    try {
+      // Get active tab
+      const [tab] = await chrome.tabs.query({active: true, currentWindow: true});
+      
+      if (!tab.url.includes('workana.com')) {
+        // If not on Workana, open it first
+        const newTab = await chrome.tabs.create({ url: 'https://www.workana.com/jobs' });
+        
+        // Wait for tab to load
+        setTimeout(() => {
+          chrome.tabs.sendMessage(newTab.id, { action: 'scrapeFourthPin' }, (response) => {
+            if (response && response.success) {
+              showNotification('Success!', `Fourth pin scraped successfully. Found ${response.projectCount} project(s).`);
+            } else {
+              showNotification('Error', 'Failed to scrape fourth pin. Please try again.');
+            }
+          });
+        }, 3000);
+      } else {
+        // Already on Workana, scrape directly
+        chrome.tabs.sendMessage(tab.id, { action: 'scrapeFourthPin' }, (response) => {
+          if (response && response.success) {
+            showNotification('Success!', `Fourth pin scraped successfully. Found ${response.projectCount} project(s).`);
+          } else {
+            showNotification('Error', 'Failed to scrape fourth pin. Please try again.');
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error scraping fourth pin:', error);
+      showNotification('Error', 'An error occurred while scraping the fourth pin.');
+    }
+  });
+
   openWorkanaBtn.addEventListener('click', () => {
     chrome.tabs.create({ url: 'https://www.workana.com/jobs' });
   });
+  
+  function showNotification(title, message) {
+    chrome.notifications.create({
+      type: 'basic',
+      iconUrl: 'icons/icon48.png',
+      title: title,
+      message: message
+    });
+  }
   
   function loadSettings() {
     chrome.storage.sync.get([

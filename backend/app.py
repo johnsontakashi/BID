@@ -15,7 +15,7 @@ def ensure_excel_file():
     if not os.path.exists(EXCEL_FILE_PATH):
         df = pd.DataFrame(columns=[
             'ID', 'Title', 'Description', 'Link', 'Budget', 
-            'Tags', 'Posted_Time', 'Scraped_At', 'Source'
+            'Tags', 'Posted_Time', 'Scraped_At', 'Source', 'Pin_Index', 'Item_Index'
         ])
         df.to_excel(EXCEL_FILE_PATH, index=False, engine='openpyxl')
     return EXCEL_FILE_PATH
@@ -49,7 +49,9 @@ def save_project_to_excel(project_data):
             'Tags': ', '.join(project_data.get('tags', [])) if project_data.get('tags') else '',
             'Posted_Time': project_data.get('postedTime', ''),
             'Scraped_At': project_data.get('scrapedAt', datetime.now().isoformat()),
-            'Source': project_data.get('source', 'workana')
+            'Source': project_data.get('source', 'workana'),
+            'Pin_Index': project_data.get('pinIndex', ''),
+            'Item_Index': project_data.get('itemIndex', '')
         }
         
         new_df = pd.DataFrame([new_row])
@@ -201,4 +203,4 @@ if __name__ == '__main__':
     print(f"  GET /api/stats - Get statistics")
     print(f"  GET /api/health - Health check")
     
-    app.run(debug=True, host='localhost', port=5000)
+    app.run(debug=True, host='localhost', port=5001)
