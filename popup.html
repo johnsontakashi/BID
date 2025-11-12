@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body {
+      width: 350px;
+      padding: 20px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      background: #f5f5f5;
+    }
+    
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid #4CAF50;
+    }
+    
+    .header h1 {
+      color: #4CAF50;
+      margin: 0;
+      font-size: 18px;
+    }
+    
+    .section {
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .section h3 {
+      margin: 0 0 10px 0;
+      color: #333;
+      font-size: 14px;
+    }
+    
+    .toggle-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 15px;
+    }
+    
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 50px;
+      height: 24px;
+    }
+    
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: .4s;
+      border-radius: 24px;
+    }
+    
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+    
+    input:checked + .slider {
+      background-color: #4CAF50;
+    }
+    
+    input:checked + .slider:before {
+      transform: translateX(26px);
+    }
+    
+    input[type="text"], input[type="number"], select {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 12px;
+      box-sizing: border-box;
+    }
+    
+    .keyword-input-container {
+      display: flex;
+      gap: 5px;
+      margin-bottom: 10px;
+    }
+    
+    #keywordInput {
+      flex: 1;
+    }
+    
+    button {
+      padding: 8px 15px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    
+    button:hover {
+      background: #45a049;
+    }
+    
+    button.remove-btn {
+      background: #f44336;
+      padding: 4px 8px;
+      font-size: 10px;
+    }
+    
+    button.remove-btn:hover {
+      background: #da190b;
+    }
+    
+    .keyword-list {
+      max-height: 100px;
+      overflow-y: auto;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 5px;
+      background: #fafafa;
+    }
+    
+    .keyword-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 5px;
+      margin: 2px 0;
+      background: white;
+      border-radius: 3px;
+      font-size: 11px;
+    }
+    
+    .status {
+      text-align: center;
+      padding: 10px;
+      border-radius: 4px;
+      font-size: 12px;
+      margin: 10px 0;
+    }
+    
+    .status.active {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    
+    .status.inactive {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    
+    .interval-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .interval-container label {
+      font-size: 12px;
+      color: #666;
+    }
+    
+    #refreshInterval {
+      width: 80px;
+    }
+    
+    .stats {
+      font-size: 11px;
+      color: #666;
+      text-align: center;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Workana Project Monitor</h1>
+  </div>
+  
+  <div class="section">
+    <div class="toggle-container">
+      <span>Enable Monitoring</span>
+      <label class="switch">
+        <input type="checkbox" id="monitoringToggle">
+        <span class="slider"></span>
+      </label>
+    </div>
+    
+    <div id="status" class="status inactive">
+      Monitoring Disabled
+    </div>
+  </div>
+  
+  <div class="section">
+    <h3>Keywords Filter</h3>
+    <div class="keyword-input-container">
+      <input type="text" id="keywordInput" placeholder="Enter keyword (e.g., web development)">
+      <button id="addKeyword">Add</button>
+    </div>
+    <div id="keywordList" class="keyword-list">
+      <div style="text-align: center; color: #999; font-size: 11px; padding: 10px;">
+        No keywords added. All projects will be monitored.
+      </div>
+    </div>
+  </div>
+  
+  <div class="section">
+    <h3>Settings</h3>
+    <div class="interval-container">
+      <label for="refreshInterval">Check every:</label>
+      <input type="number" id="refreshInterval" min="10" value="30">
+      <label>seconds</label>
+    </div>
+  </div>
+  
+  <div class="section">
+    <h3>Actions</h3>
+    <button id="testNotification" style="width: 100%; margin-bottom: 10px;">Test Notification</button>
+    <button id="openWorkana" style="width: 100%; background: #2196F3;">Open Workana</button>
+  </div>
+  
+  <div class="stats" id="stats">
+    Last checked: Never
+  </div>
+  
+  <script src="popup.js"></script>
+</body>
+</html>
